@@ -56,12 +56,13 @@ describe('fluxo do pedido pago', () => {
   it('nada vai para preparo antes da confirmação; depois, petiscos na cozinha e bebidas no bar', async () => {
     expect((await painelSetor(db, 'cozinha')).preparos).toHaveLength(0);
     const v0 = await versaoAtual(db);
-    const { pedido, duplicado } = await confirmarPagamento(db, garcom, pedidoBase());
+    const { pedido, duplicado } = await confirmarPagamento(db, garcom, { ...pedidoBase(), cliente: '  Mariana   Souza ' });
     expect(duplicado).toBe(false);
     expect(pedido!.status).toBe('pago');
     expect(pedido!.confirmacao).toBe('manual_garcom');
     expect(pedido!.formaPagamento).toBe('credito');
     expect(pedido!.garcom).toBe('Ana');
+    expect(pedido!.cliente).toBe('Mariana Souza');
     expect(await versaoAtual(db)).toBeGreaterThan(v0);
     const coz = await painelSetor(db, 'cozinha');
     const br = await painelSetor(db, 'bar');
@@ -69,6 +70,7 @@ describe('fluxo do pedido pago', () => {
     expect(coz.preparos[0].itens).toEqual([{ nome: 'Batata frita', quantidade: 1 }]);
     expect(br.preparos[0].itens).toEqual([{ nome: 'Chopp 300 ml', quantidade: 2 }]);
     expect(br.preparos[0].mesa).toBe(3);
+    expect(br.preparos[0].cliente).toBe('Mariana Souza');
   });
 
   it('o mesmo envio repetido (ou simultâneo) não cria outro pedido', async () => {
@@ -87,6 +89,7 @@ describe('fluxo do pedido pago', () => {
     expect(lista.length).toBeGreaterThanOrEqual(2);
     const turno = await mesasDoTurno(db, lista[0].dataOperacional);
     expect(turno.find((m) => m.id === mesa)!.pedidos).toBe(lista.length);
+    expect(turno.find((m) => m.id === mesa)!.clientes).toEqual(['Mariana Souza']);
   });
 
   it('recusa forma de pagamento ausente e total cobrado que não confere', async () => {

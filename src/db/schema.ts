@@ -71,6 +71,7 @@ export const pedidos = pgTable(
     status: text('status').notNull().default('pago'), // pago | cancelado | estornado
     divergenciaPreco: boolean('divergencia_preco').notNull().default(false),
     observacao: text('observacao'),
+    cliente: text('cliente'), // nome do cliente informado pelo garçom (opcional)
     encerradoPorId: uuid('encerrado_por_id').references(() => usuarios.id),
     encerradoEm: momento('encerrado_em'),
     motivoEncerramento: text('motivo_encerramento'),
