@@ -765,7 +765,7 @@ function DetalhePedidoModal({ id, fechar, usuarioId }: { id: string; fechar: () 
           {msg && <Aviso tipo={msg.tipo}>{msg.texto}</Aviso>}
           {p.status === 'pago' && !p.solicitacaoPendente && !cancelar && (
             <button className="btn contorno-perigo" onClick={() => setCancelar(true)}>
-              Solicitar cancelamento / estorno
+              Pedir cancelamento ao administrador
             </button>
           )}
           {p.solicitacaoPendente && <Aviso tipo="alerta">Cancelamento aguardando autorização do administrador.</Aviso>}

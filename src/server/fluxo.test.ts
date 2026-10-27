@@ -9,6 +9,7 @@ import { confirmarPagamento, detalhePedido, listarPedidos, previa } from './pedi
 import { mudarStatus, painelSetor, prontosParaEntrega } from './preparo';
 import { relatorio, mesasDoTurno } from './relatorios';
 import { versaoAtual } from './eventos';
+import { custosELucro, excluirDespesa, lancarDespesa } from './financeiro';
 
 let db: Db;
 let admin: Usuario;
@@ -165,5 +166,23 @@ describe('fluxo do pedido pago', () => {
     expect(r.estornadoCentavos).toBe(soma('estornado'));
     expect(r.liquidoCentavos).toBe(soma('pago'));
     expect(r.divergencias).toBe(1);
+  });
+
+  it('custos e lucro: despesas por categoria descontadas das vendas líquidas', async () => {
+    const lista = await listarPedidos(db, {});
+    const data = lista[0].dataOperacional;
+    const liquido = lista.filter((p) => p.status === 'pago').reduce((a, p) => a + p.totalCentavos, 0);
+    await lancarDespesa(db, admin, { data, categoria: 'funcionarios', descricao: 'Diária da Ana', valorCentavos: 8000, funcionarioId: garcom.id });
+    const beb = await lancarDespesa(db, admin, { data, categoria: 'bebidas', descricao: 'Caixas de chopp', valorCentavos: 5000 });
+    await expect(lancarDespesa(db, admin, { data, categoria: 'bebidas', descricao: '', valorCentavos: 100 })).rejects.toThrow(/Descreva/);
+    let r = await custosELucro(db, data, data);
+    expect(r.resumo.vendasCentavos).toBe(liquido);
+    expect(r.resumo.despesasCentavos).toBe(13000);
+    expect(r.resumo.lucroCentavos).toBe(liquido - 13000);
+    expect(r.despesas.find((d) => d.categoria === 'funcionarios')!.funcionario).toBe('Ana');
+    expect(r.vendasPorSetor.cozinha + r.vendasPorSetor.bar).toBe(liquido);
+    await excluirDespesa(db, admin, beb.id);
+    r = await custosELucro(db, data, data);
+    expect(r.resumo.despesasCentavos).toBe(8000);
   });
 });

@@ -143,3 +143,19 @@ export const eventos = pgTable(
   },
   (t) => [index('eventos_pedido_idx').on(t.pedidoId)],
 );
+
+/** Despesas do bar (funcionários, compras de bebidas e de comidas, contas...), lançadas pelo administrador. */
+export const despesas = pgTable(
+  'despesas',
+  {
+    id: id(),
+    data: text('data').notNull(), // AAAA-MM-DD da despesa
+    categoria: text('categoria').notNull(),
+    descricao: text('descricao').notNull(),
+    valorCentavos: integer('valor_centavos').notNull(),
+    funcionarioId: uuid('funcionario_id').references(() => usuarios.id), // quando é pagamento de funcionário
+    criadoPorId: uuid('criado_por_id').notNull().references(() => usuarios.id),
+    criadoEm: criadoEm(),
+  },
+  (t) => [index('despesas_data_idx').on(t.data)],
+);
